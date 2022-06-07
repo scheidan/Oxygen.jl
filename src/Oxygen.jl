@@ -3,17 +3,14 @@ module Oxygen
     using JSON3
     using Sockets
 
-    include("util.jl")
-    using .Util
-    
-    include("fileutil.jl")
-    using .FileUtil
-
-    include("streamutil.jl")
-    using .StreamUtil
+    include("util.jl");         using .Util
+    include("fileutil.jl");     using .FileUtil
+    include("streamutil.jl");   using .StreamUtil
+    include("autodoc.jl");      using .AutoDoc
 
     export @get, @post, @put, @patch, @delete, @register, @route, @staticfiles, @dynamicfiles,
-            serve, serveparallel, terminate, internalrequest, queryparams, binary, text, json, html, file
+            serve, serveparallel, terminate, internalrequest, queryparams, binary, text, json, 
+            html, file
 
     # define REST endpoints to dispatch to "service" functions
     const ROUTER = HTTP.Router()
@@ -26,6 +23,7 @@ module Oxygen
     """
     function serve(host="127.0.0.1", port=8080; kwargs...)
         println("Starting server: http://$host:$port")
+        setup()
         server[] = Sockets.listen(Sockets.InetAddr(parse(IPAddr, host), port))
         HTTP.serve(req -> DefaultHandler(req), host, port; server=server[], kwargs...)
     end
@@ -38,6 +36,7 @@ module Oxygen
     """
     function serve(handler::Function, host="127.0.0.1", port=8080; kwargs...)
         println("Starting server: http://$host:$port")
+        setup()
         server[] = Sockets.listen(Sockets.InetAddr(parse(IPAddr, host), port))
         HTTP.serve(req -> handler(req, ROUTER, DefaultHandler), host, port; server=server[], kwargs...)
     end
@@ -52,6 +51,7 @@ module Oxygen
     """
     function serveparallel(host="127.0.0.1", port=8080, queuesize=1024; kwargs...)
         println("Starting server: http://$host:$port")
+        setup()
         server[] = Sockets.listen(Sockets.InetAddr(parse(IPAddr, host), port))
         StreamUtil.start(server[], req -> DefaultHandler(req); queuesize=queuesize, kwargs...)
     end
@@ -66,6 +66,7 @@ module Oxygen
     """
     function serveparallel(handler::Function, host="127.0.0.1", port=8080, queuesize=1024; kwargs...)
         println("Starting server: http://$host:$port")
+        setup()
         server[] = Sockets.listen(Sockets.InetAddr(parse(IPAddr, host), port))
         StreamUtil.start(server[], req -> handler(req, ROUTER, DefaultHandler); queuesize=queuesize, kwargs...)
     end
@@ -79,7 +80,6 @@ module Oxygen
     function internalrequest(req::HTTP.Request) :: HTTP.Response
         return DefaultHandler(req)
     end
-
 
     """
         terminate()
@@ -397,6 +397,8 @@ module Oxygen
             end
         end
 
+        registerchema(path, httpmethod, zip(func_param_names, func_param_types), Base.return_types(func))
+
         local handlerequest = quote 
             local action = $(esc(func))
             function (req)
@@ -425,6 +427,26 @@ module Oxygen
         quote 
             HTTP.@register(ROUTER, $httpmethod, $cleanpath, $handlerequest)
         end
+    end
+
+
+    # add the swagger and swagger/schema routes 
+    function setupswagger()
+         
+        @get "/swagger" function()
+            return html(swaggerhtml())
+        end
+    
+        @get "/swagger/schema" function()
+            return getschema() 
+        end
+        
+    end
+
+    # function called right before serving the server, which is useful for setting up 
+    # any additional routes
+    function setup()
+        setupswagger()
     end
 
 end

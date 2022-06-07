@@ -16,18 +16,18 @@ module Main
     # Add a supporting struct type definition to the Animal struct
     StructTypes.StructType(::Type{Animal}) = StructTypes.Struct()
 
-    @get "/" function()
-        return "home"
-    end
+    # @get "/" function()
+    #     return "home"
+    # end
 
-    @get "/killserver" function ()
-        terminate()
-    end
+    # @get "/killserver" function ()
+    #     terminate()
+    # end
 
-    # add a default handler for unmatched requests
-    @get "*" function () 
-        return "looks like you hit an endpoint that doesn't exist"
-    end
+    # # add a default handler for unmatched requests
+    # @get "*" function () 
+    #     return "looks like you hit an endpoint that doesn't exist"
+    # end
 
     # You can also interpolate variables into the endpoint
     operations = Dict("add" => +, "multiply" => *)
@@ -64,70 +64,70 @@ module Main
         return a / b
     end
 
-    # Return the body of the request as a string
-    @post "/echo-text" function (req::HTTP.Request)
-        return text(req)
-    end
+    # # Return the body of the request as a string
+    # @post "/echo-text" function (req::HTTP.Request)
+    #     return text(req)
+    # end
 
-    # demonstrates how to serialize JSON into a julia struct 
-    @post "/animal" function (req)
-        return json(req, Animal)
-    end
+    # # demonstrates how to serialize JSON into a julia struct 
+    # @post "/animal" function (req)
+    #     return json(req, Animal)
+    # end
 
-    # Return the body of the request as a JSON object
-    @post "/echo-json" function (req::HTTP.Request)
-        return json(req)
-    end
+    # # Return the body of the request as a JSON object
+    # @post "/echo-json" function (req::HTTP.Request)
+    #     return json(req)
+    # end
 
-    # You can also return your own customized HTTP.Response object from an endpoint
-    @get "/custom-response" function (req::HTTP.Request)
-        test_value = 77.8
-        return HTTP.Response(200, ["Content-Type" => "text/plain"], body = "$test_value")
-    end
+    # # You can also return your own customized HTTP.Response object from an endpoint
+    # @get "/custom-response" function (req::HTTP.Request)
+    #     test_value = 77.8
+    #     return HTTP.Response(200, ["Content-Type" => "text/plain"], body = "$test_value")
+    # end
 
-    # Any object retuned from a function will automatically be converted into JSON (by default)
-    @get "/json" function(req::HTTP.Request)
-        return Dict("message" => "hello world", "animal" => Animal(1, "cat", "whiskers"))
-    end
+    # # Any object retuned from a function will automatically be converted into JSON (by default)
+    # @get "/json" function(req::HTTP.Request)
+    #     return Dict("message" => "hello world", "animal" => Animal(1, "cat", "whiskers"))
+    # end
     
-    # show how to return a file from an endpoint
-    @get "/files" function (req)
-        return file("demo/main.jl")
-    end
+    # # show how to return a file from an endpoint
+    # @get "/files" function (req)
+    #     return file("demo/main.jl")
+    # end
 
-    # show how to return a string that needs to be interpreted as html
-    @get "/string-as-html" function (req)
-        message = "Hello World!"
-        return html("""
-            <!DOCTYPE html>
-                <html>
-                <body> 
-                    <h1>$message</h1>
-                </body>
-            </html>
-        """)
-    end
+    # # show how to return a string that needs to be interpreted as html
+    # @get "/string-as-html" function (req)
+    #     message = "Hello World!"
+    #     return html("""
+    #         <!DOCTYPE html>
+    #             <html>
+    #             <body> 
+    #                 <h1>$message</h1>
+    #             </body>
+    #         </html>
+    #     """)
+    # end
 
-    @swagger """
-    /demo:
-        get:
-            description: show how to use the lower level macro to add a route for any type of request
-            responses:
-                '200':
-                    description: Returns an animal.     
-        post:
-            description: show how to use the lower level macro to add a route for any type of request
-            responses:
-                '200':
-                    description: Returns an animal.        
-    """
+    # @swagger """
+    # /demo:
+    #     get:
+    #         description: show how to use the lower level macro to add a route for any type of request
+    #         responses:
+    #             '200':
+    #                 description: Returns an animal.     
+    #     post:
+    #         description: show how to use the lower level macro to add a route for any type of request
+    #         responses:
+    #             '200':
+    #                 description: Returns an animal.        
+    # """
     @route ["GET", "POST"] "/demo" function(req)
         return Animal(1, "cat", "whiskers")
     end
 
-    # recursively mount all files inside the demo folder ex.) demo/main.jl => /static/demo/main.jl 
-    @staticfiles "content"
-    @dynamicfiles "content" "dynamic"
+    # # recursively mount all files inside the demo folder ex.) demo/main.jl => /static/demo/main.jl 
+    # @staticfiles "content"
+    # @dynamicfiles "content" "dynamic"
 
 
     # CORS headers that show what kinds of complex requests are allowed to API
@@ -146,17 +146,26 @@ module Main
         end
     end
 
-    # the info of the API, title and version of the info are required
-    info = Dict("title" => "Oxygen.jl demo api", "version" => "1.0.0")
-    openApi = OpenAPI("2.0", info)
-    swagger_document = build(openApi)
-    swagger_html = render_swagger(swagger_document)
+    # # the info of the API, title and version of the info are required
+    # info = Dict("title" => "Oxygen.jl demo api", "version" => "1.0.0")
+    # openApi = OpenAPI("2.0", info)
+    # swagger_document = build(openApi)
+    # swagger_html = render_swagger(swagger_document)
 
-    # setup endpoint to serve swagger documentation
-    @get "/swagger" function()
-        return html(swagger_html)
-    end
+    # # setup endpoint to serve swagger documentation
+    # @get "/swagger" function()
+    #     return html(swagger_html)
+    # end
 
+
+    # # setup endpoint to serve swagger documentation
+    # @get "/swagger" function()
+    #     return html(file("../src/swagger.html"))
+    # end
+
+    # @get "/swagger/schema" function()
+    #     return getschema() 
+    # end
     # start the web server
     serve((req, router, defaultHandler) -> CorsHandler(req, defaultHandler))
 
