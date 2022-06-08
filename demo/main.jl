@@ -32,7 +32,7 @@ module Main
     # You can also interpolate variables into the endpoint
     operations = Dict("add" => +, "multiply" => *)
     for (pathname, operator) in operations
-        @get "/$pathname/{a}/{b}" function (req, a::Float64, b::Float64)
+        @get "/$pathname/{a}/{b}" function (req, a::Int64, b::Float64)
             return operator(a, b)
         end
     end
@@ -69,7 +69,7 @@ module Main
     #     return text(req)
     # end
 
-    # # demonstrates how to serialize JSON into a julia struct 
+    # demonstrates how to serialize JSON into a julia struct 
     # @post "/animal" function (req)
     #     return json(req, Animal)
     # end
