@@ -1,9 +1,12 @@
 module AutoDoc 
     using JSON3
-    export registerchema, getschema, swaggerhtml, configdocs
+    export registerchema, getschema, swaggerhtml, configdocs, path, param, buildschema
 
     global swaggerpath = "/swagger"
     global schemapath = "/swagger/schema"
+
+    global paramSchemas = []
+    global pathSchemas = []
 
     global schema = Dict(
         "openapi" => "3.0.0",
@@ -13,6 +16,48 @@ module AutoDoc
         ),
         "paths" => Dict()
     )
+
+    function buildschema()
+
+
+        for pathschema in pathSchemas
+
+            if haskey(schema["paths"], pathschema["path"])
+                for (httpmethod, currentschema) in schema["paths"][pathschema["path"]]
+
+                    schema["paths"][pathschema["path"]][httpmethod]["description"] = pathschema["description"]
+                end
+            end
+
+        end
+
+
+        # iterate over all registered schemas
+        for dict in paramSchemas
+
+            # iterate over the values of each schema
+            for (path, param) in dict 
+
+                # update paths
+                if haskey(schema["paths"], path)
+                    currentschema = schema["paths"][path]
+                    currentparameters = currentschema["get"]["parameters"]
+
+                    # update the parameters attached to each path 
+                    for (index, currentparam) in enumerate(currentparameters)
+                        if currentparam["name"] === param["name"]
+                            schema["paths"][path]["get"]["parameters"][index] = param
+                        end
+                    end
+
+                end
+
+            end
+
+         
+        end
+
+    end
 
     function getschema()
         return schema 
@@ -32,6 +77,39 @@ module AutoDoc
             return "boolean"
         else 
             return "string"
+        end
+    end
+
+    function path(path::String, description="", params...)
+
+        # save path level docs for later on
+        push!(pathSchemas, Dict("path" => path, "description" => description))
+
+        # register param level schema
+        for registerparam in params 
+            registerparam(path)
+        end
+        
+    end
+
+
+    function param(
+            name::String; 
+            description = nothing,
+            type = nothing, 
+            required = true)
+
+        return function(path)
+            param = Dict( 
+                "in" => "path",
+                "name" => "$name", 
+                "description" => isnothing(description) ? "" : description,
+                "required" => "$(required)",
+                "schema" => Dict(
+                    "type" => gettype(type)
+                )
+            )
+            push!(paramSchemas, Dict(path => param))
         end
     end
 

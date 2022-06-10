@@ -10,7 +10,7 @@ module Oxygen
 
     export @get, @post, @put, @patch, @delete, @register, @route, @staticfiles, @dynamicfiles,
             serve, serveparallel, terminate, internalrequest, queryparams, binary, text, json, 
-            html, file, configdocs
+            html, file, configdocs, path, param
 
     # define REST endpoints to dispatch to "service" functions
     const ROUTER = HTTP.Router()
@@ -432,6 +432,8 @@ module Oxygen
 
     # add the swagger and swagger/schema routes 
     function setupswagger()
+
+        buildschema()
 
         local swaggerpath = AutoDoc.swaggerpath
         local schemapath = AutoDoc.schemapath

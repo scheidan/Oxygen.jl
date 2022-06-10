@@ -30,13 +30,18 @@ module Main
     # end
 
     # You can also interpolate variables into the endpoint
-    operations = Dict("add" => +, "multiply" => *)
-    for (pathname, operator) in operations
-        @get "/$pathname/{a}/{b}" function (req, a::Int64, b::Float64)
-            return operator(a, b)
-        end
-    end
+    # operations = Dict("add" => +, "multiply" => *)
+    # for (pathname, operator) in operations
+    #     @get "/$pathname/{a}/{b}" function (req, a::Int64, b::Float64)
+    #         return operator(a, b)
+    #     end
+    # end
 
+    path("/power/{a}/{b}", "returns the result of a ^ b",
+        param("b", description="the second number"),
+        param("a", description="a number")
+    )
+    
     # demonstate how to use path params (without type definitions)
     @get "/power/{a}/{b}" function (req::HTTP.Request, b, a)
         return parse(Float64, a) ^ parse(Float64, b)
@@ -169,5 +174,8 @@ module Main
     # start the web server
     serve((req, router, defaultHandler) -> CorsHandler(req, defaultHandler))
 
+  
+
+   
 end
 
